@@ -36,7 +36,7 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         gameObject.name = IsOwner ? "localPlayer" : "remotePlayer";
-        if (!IsOwner)
+        if (!(IsOwner && IsClient))
         {
             GFX.material = remoteMaterial;
         }
@@ -44,16 +44,11 @@ public class PlayerController : NetworkBehaviour
 
     private void Update()
     {
+        motor.ApplyAnimation();
         if (!(IsOwner && IsClient)) return;
-        var input = GetInput();
-        motor.Move(input);
+        motor.Move(movement.ReadValue<Vector2>());
     }
 
-
-    private Vector2 GetInput()
-    {
-       return new Vector2(movement.ReadValue<Vector2>().x, movement.ReadValue<Vector2>().y);
-    }
 
 
 }

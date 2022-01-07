@@ -10,6 +10,7 @@ public class PlayerController : NetworkBehaviour
 
     private PlayerInputActions playerInputActions;
     private InputAction movement;
+    private InputAction dash;
     PlayerMotor motor;
 
     [Header("Fields")]
@@ -26,6 +27,10 @@ public class PlayerController : NetworkBehaviour
     {
         movement = playerInputActions.Player.Movement;
         movement.Enable();
+
+        dash = playerInputActions.Player.Dash;
+        dash.Enable();
+
     }
 
     private void OnDisable()
@@ -46,7 +51,11 @@ public class PlayerController : NetworkBehaviour
     {
         motor.ApplyAnimation();
         if (!(IsOwner && IsClient)) return;
-        motor.Move(movement.ReadValue<Vector2>());
+        //motor.SetInput(movement.ReadValue<Vector2>());
+        var input = movement.ReadValue<Vector2>();
+        var dashRequest = dash.IsPressed();
+        if (dashRequest) motor.Dash(input);
+        motor.Move(input);
     }
 
 

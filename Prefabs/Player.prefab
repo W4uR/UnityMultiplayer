@@ -144,7 +144,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 10
   turnSpeed: 1080
+  dashDistance: 20
+  dashTime: 0.5
+  dashCooldown: 1.5
+  dashSnapiness: 0
   mass: 5
+  networkPlayerState:
+    m_InternalValue: 0
 --- !u!114 &2266538909953545818
 MonoBehaviour:
   m_ObjectHideFlags: 0

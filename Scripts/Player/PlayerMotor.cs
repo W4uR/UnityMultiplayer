@@ -1,7 +1,6 @@
 using Unity.Netcode;
 using Unity.Netcode.Samples;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(ClientNetworkTransform))]
@@ -11,7 +10,9 @@ public class PlayerMotor : NetworkBehaviour
     {
         Idle,
         Walk,
-        Dashing
+        Dash,
+        Attack,
+        Mine,
     }
 
     [SerializeField] float speed;
@@ -20,7 +21,8 @@ public class PlayerMotor : NetworkBehaviour
     [SerializeField] float dashTime;
     [SerializeField] float dashCooldown;
     [SerializeField] float mass = 10;
-    [SerializeField]
+
+
     private NetworkVariable<PlayerState> networkPlayerState = new NetworkVariable<PlayerState>();
 
 
@@ -30,6 +32,10 @@ public class PlayerMotor : NetworkBehaviour
     float timeLeft2Dash = 0;
     float dashScaler;
     private Vector2 latestInput;
+
+
+    private bool isDashing => timeLeft2Dash > dashCooldown - dashTime;
+
     private void Awake()
     {
         cc = GetComponent<CharacterController>();
@@ -53,14 +59,14 @@ public class PlayerMotor : NetworkBehaviour
 
     }
 
-    private bool isDashing => timeLeft2Dash > dashCooldown - dashTime;
+    
     public void Move(Vector2 input)
     {
         ApplyGravity();
         //Animation
         if (isDashing)
         {
-            UpdatePlayerStateServerRpc(PlayerState.Dashing);
+            UpdatePlayerStateServerRpc(PlayerState.Dash);
             return;
         }
         else if (input == Vector2.zero)

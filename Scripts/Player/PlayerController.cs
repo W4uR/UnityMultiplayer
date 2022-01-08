@@ -58,6 +58,6 @@ public class PlayerController : NetworkBehaviour
         motor.Move(input);
     }
 
-
+    //Maybe change playerstate in this class
 
 }

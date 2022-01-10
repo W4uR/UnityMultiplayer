@@ -1,7 +1,9 @@
+using System;
 using Unity.Netcode;
 using Unity.Netcode.Samples;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerController))]
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(ClientNetworkTransform))]
 public class PlayerMotor : NetworkBehaviour
@@ -20,81 +22,95 @@ public class PlayerMotor : NetworkBehaviour
     [SerializeField] float dashDistance;
     [SerializeField] float dashTime;
     [SerializeField] float dashCooldown;
-    [SerializeField] float mass = 10;
+    [SerializeField] float mass;
 
 
     private NetworkVariable<PlayerState> networkPlayerState = new NetworkVariable<PlayerState>();
 
-
+    PlayerController pc;
     CharacterController cc;
     Animator animator;
     float yVel;
     float timeLeft2Dash = 0;
     float dashScaler;
-    private Vector2 latestInput;
 
 
     private bool isDashing => timeLeft2Dash > dashCooldown - dashTime;
+    private bool canDash => timeLeft2Dash <= 0;
+    private bool isGrounded => Physics.Raycast(transform.position, Vector3.down, cc.height / 2 + .2f, LayerMask.NameToLayer("Player"));
+    private bool canMove =>  pc.LatestInput != Vector2.zero && !isDashing;
 
     private void Awake()
     {
+        pc = GetComponent<PlayerController>();
         cc = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+
+
         dashScaler = 2 * (dashDistance / dashTime);
     }
 
     private void Update()
     {
-        if (timeLeft2Dash > 0) timeLeft2Dash -= Time.deltaTime;
+        ApplyGravity();
+        PlayerState currentState = PlayerState.Idle;
+        if (IsClient && IsOwner)
+        {
+            if (ApplyDash())
+            {
+                currentState = PlayerState.Dash;
+            }
+            else if (ApplyMovement())
+            {
+                currentState = PlayerState.Walk;
+            }
+
+            UpdatePlayerStateServerRpc(currentState);
+        }
+
+        ApplyAnimation(currentState);
+    }
+
+    
+    public bool ApplyMovement()
+    {
+        if (!canMove) return false;
+        Move(speed);
+        return true;
+    }
+
+    // REMOVE BUG --- Stop input during dashing resets rotation
+    public bool ApplyDash()
+    {
+        if (!canDash) timeLeft2Dash -= Time.deltaTime; //Lower Cooldown
+
         if (isDashing)
         {
             //MovePlayer
             float timeLeftDashing = dashTime - (dashCooldown - timeLeft2Dash);
-
-            var relativeDir = new Vector3(latestInput.x, 0f, latestInput.y).ToIso();
-            var rot = Quaternion.LookRotation(relativeDir, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, rot, turnSpeed * Time.deltaTime);
-            cc.Move(relativeDir * timeLeftDashing * dashScaler * Time.deltaTime);
+            Move(timeLeftDashing * dashScaler);
+            return true;
         }
-
+        return false;
     }
 
-    
-    public void Move(Vector2 input)
+    internal void DashRequest()
     {
-        ApplyGravity();
-        //Animation
-        if (isDashing)
-        {
-            UpdatePlayerStateServerRpc(PlayerState.Dash);
-            return;
-        }
-        else if (input == Vector2.zero)
-        {
-            UpdatePlayerStateServerRpc(PlayerState.Idle);
-            return;//If we don't want to move let's not move
-        }
-            UpdatePlayerStateServerRpc(PlayerState.Walk);
+        if (canDash)
+        timeLeft2Dash = dashCooldown;
+    }
 
-        //Movement
-        
-        var relativeDir = new Vector3(input.x, 0f, input.y).ToIso();
+    private void Move(float speedAmp)
+    {
+        var relativeDir = new Vector3(pc.LatestInput.x, 0f, pc.LatestInput.y).ToIso();
         var rot = Quaternion.LookRotation(relativeDir, Vector3.up);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, rot, turnSpeed * Time.deltaTime);
-        cc.Move(relativeDir * speed * Time.deltaTime);
-    }
-
-    public void Dash(Vector2 input)
-    {
-        if (timeLeft2Dash > 0) return;
-        timeLeft2Dash = dashCooldown;
-        latestInput = input;
-
+        cc.Move(relativeDir * Time.deltaTime * speedAmp);
     }
 
     void ApplyGravity()
     {
-        bool isGrounded = Physics.Raycast(transform.position, Vector3.down, cc.height / 2 + .1f, LayerMask.NameToLayer("Player"));
+        
         if (cc.collisionFlags == CollisionFlags.Below || isGrounded)
         {
             yVel = 0;
@@ -102,16 +118,16 @@ public class PlayerMotor : NetworkBehaviour
         }
 
         yVel += -Physics.gravity.magnitude * Time.deltaTime * mass;
-
         cc.Move(yVel * Vector3.up * Time.deltaTime);
     }
 
-    public void ApplyAnimation()
+    public void ApplyAnimation(PlayerState state)
     {
-        if (networkPlayerState.Value == PlayerState.Idle)
+        if (state == PlayerState.Idle)
         {
             animator.SetBool("isWalking",false);
-        }else if (networkPlayerState.Value == PlayerState.Walk)
+        }
+        else if (state == PlayerState.Walk)
         {
             animator.SetBool("isWalking", true);
         }

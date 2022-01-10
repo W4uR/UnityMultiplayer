@@ -10,12 +10,17 @@ public class PlayerController : NetworkBehaviour
 
     private PlayerInputActions playerInputActions;
     private InputAction movement;
-    private InputAction dash;
+    private bool myInstance = false;
     PlayerMotor motor;
 
     [Header("Fields")]
     [SerializeField] Material remoteMaterial;
     [SerializeField] MeshRenderer GFX;
+
+    private Vector2 latestInput;
+
+    public Vector2 LatestInput => latestInput;
+
 
     private void Awake()
     {
@@ -28,14 +33,18 @@ public class PlayerController : NetworkBehaviour
         movement = playerInputActions.Player.Movement;
         movement.Enable();
 
-        dash = playerInputActions.Player.Dash;
-        dash.Enable();
+        playerInputActions.Player.Dash.performed += HandleDash;
+        playerInputActions.Player.Dash.Enable();
 
     }
+
+  
 
     private void OnDisable()
     {
         movement.Disable();
+        playerInputActions.Player.Dash.performed -= HandleDash;
+        playerInputActions.Player.Dash.Disable();
     }
 
     public override void OnNetworkSpawn()
@@ -44,20 +53,22 @@ public class PlayerController : NetworkBehaviour
         if (!(IsOwner && IsClient))
         {
             GFX.material = remoteMaterial;
+            return;
         }
+        myInstance = true;
     }
 
     private void Update()
     {
-        motor.ApplyAnimation();
-        if (!(IsOwner && IsClient)) return;
-        //motor.SetInput(movement.ReadValue<Vector2>());
-        var input = movement.ReadValue<Vector2>();
-        var dashRequest = dash.IsPressed();
-        if (dashRequest) motor.Dash(input);
-        motor.Move(input);
+        if (myInstance)
+        {
+            latestInput = movement.ReadValue<Vector2>();
+        }
+    }
+    private void HandleDash(InputAction.CallbackContext obj)
+    {
+        motor.DashRequest();
     }
 
-    //Maybe change playerstate in this class
 
 }

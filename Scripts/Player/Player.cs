@@ -1,11 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
     // Start is called before the first frame update
     string playerName;
+    [SerializeField]
+    GameObject playerObjectPrefab;
 
     void Start()
     {

@@ -49,13 +49,17 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        gameObject.name = IsOwner ? "localPlayer" : "remotePlayer";
-        if (!(IsOwner && IsClient))
+        if ((IsOwner && IsClient))
+        {
+            myInstance = true;
+            gameObject.name = "LocalPlayer";
+            gameObject.tag = "LOCAL";
+        }
+        else
         {
             GFX.material = remoteMaterial;
-            return;
-        }
-        myInstance = true;
+            gameObject.name = "RemotePlayer";
+        }        
     }
 
     private void Update()

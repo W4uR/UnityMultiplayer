@@ -84,7 +84,7 @@ public class PlayerMotor : NetworkBehaviour
     {
         if (!canDash) timeLeft2Dash -= Time.deltaTime; //Lower Cooldown
 
-        if (isDashing)
+        if (isDashing && pc.LatestInput != Vector2.zero)
         {
             //MovePlayer
             float timeLeftDashing = dashTime - (dashCooldown - timeLeft2Dash);

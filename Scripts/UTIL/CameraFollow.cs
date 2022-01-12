@@ -2,28 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CameraFollow : MonoBehaviour
+public class CameraFollow : Singleton<CameraFollow>
 {
     [SerializeField] Transform target;
     [SerializeField][Range(0f,1f)] float smoothSpeed;
     [SerializeField] Vector3 offset;
 
-    public void SetTarget(Transform target) { if (this.target == null) this.target = target; }
-    public static CameraFollow Instance;
-    private void Start()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        target = GameObject.Find("localPlayer").transform;
-    }
-    private void LateUpdate()
+
+    private void Update()
     {
         if (target == null)
         {
-            return;
+            target = GameObject.FindGameObjectWithTag("LOCAL").transform;
         }
+
         Vector3 desiredPos = target.position + offset;
         Vector3 smoothedPos = Vector3.Lerp(transform.position, desiredPos, smoothSpeed);
         transform.position = smoothedPos;

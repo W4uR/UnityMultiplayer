@@ -5,19 +5,12 @@ using Unity.Netcode;
 
 public class Player : NetworkBehaviour
 {
-    // Start is called before the first frame update
+
     string playerName;
     [SerializeField]
     GameObject playerObjectPrefab;
 
-    void Start()
-    {
-        
-    }
+    NetworkObject myCharacer;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+
 }

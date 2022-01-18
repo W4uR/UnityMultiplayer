@@ -144,8 +144,8 @@ MonoBehaviour:
   speed: 10
   turnSpeed: 1080
   dashDistance: 20
-  dashTime: 0.5
-  dashCooldown: 1.5
+  dashDuration: 0.5
+  dashMaxCD: 3
   mass: 5
 --- !u!95 &1903066769125507843
 Animator:

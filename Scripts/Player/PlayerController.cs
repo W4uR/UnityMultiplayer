@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
-using System;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -18,8 +15,10 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] MeshRenderer GFX;
 
     private Vector2 latestInput;
-
+    private Vector2 latestNot0Input;
     public Vector2 LatestInput => latestInput;
+    public Vector2 LatestNot0Input => latestNot0Input; //latestInput == Vector2.zero ? new Vector2(transform.forward.x,transform.forward.z) : latestInput;
+    public Vector3 relativeDir => new Vector3(LatestNot0Input.x, 0f, LatestNot0Input.y).ToIso();
 
 
     private void Awake()
@@ -67,6 +66,10 @@ public class PlayerController : NetworkBehaviour
         if (myInstance)
         {
             latestInput = movement.ReadValue<Vector2>();
+            if (latestInput != Vector2.zero)
+            {
+                latestNot0Input = latestInput;
+            }
         }
     }
     private void HandleDash(InputAction.CallbackContext obj)

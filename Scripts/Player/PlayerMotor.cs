@@ -1,4 +1,3 @@
-using System;
 using Unity.Netcode;
 using Unity.Netcode.Samples;
 using UnityEngine;
@@ -20,25 +19,28 @@ public class PlayerMotor : NetworkBehaviour
     [SerializeField] float speed;
     [SerializeField] float turnSpeed;
     [SerializeField] float dashDistance;
-    [SerializeField] float dashTime;
-    [SerializeField] float dashCooldown;
+    [SerializeField] float dashDuration;
+    [SerializeField] float dashMaxCD;
     [SerializeField] float mass;
 
 
     private NetworkVariable<PlayerState> networkPlayerState = new NetworkVariable<PlayerState>();
 
+
     PlayerController pc;
     CharacterController cc;
     Animator animator;
     float yVel;
-    float timeLeft2Dash = 0;
+    float dashCD = 0;
     float dashScaler;
+    PlayerState currentState = PlayerState.Idle;
 
 
-    private bool isDashing => timeLeft2Dash > dashCooldown - dashTime;
-    private bool canDash => timeLeft2Dash <= 0;
+    private float timeLeftDashing => dashDuration - (dashMaxCD - dashCD);
+    private bool isDashing => timeLeftDashing > 0;
+    private bool canDash => dashCD <= 0 && (currentState == PlayerState.Idle || currentState == PlayerState.Walk) && isGrounded;
     private bool isGrounded => Physics.Raycast(transform.position, Vector3.down, cc.height / 2 + .2f, LayerMask.NameToLayer("Player"));
-    private bool canMove =>  pc.LatestInput != Vector2.zero && !isDashing;
+    private bool want2Move => pc.LatestInput != Vector2.zero;
 
     private void Awake()
     {
@@ -46,67 +48,78 @@ public class PlayerMotor : NetworkBehaviour
         cc = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
 
+        dashScaler = 2 * (dashDistance / dashDuration);
 
-        dashScaler = 2 * (dashDistance / dashTime);
     }
+
 
     private void Update()
     {
+        LowerCoolDowns();
         ApplyGravity();
-        PlayerState currentState = PlayerState.Idle;
         if (IsClient && IsOwner)
         {
-            if (ApplyDash())
+
+            //Apply state-specific actions
+
+            CancelStates();
+            if (currentState == PlayerState.Idle || currentState == PlayerState.Walk)
             {
-                currentState = PlayerState.Dash;
-            }
-            else if (ApplyMovement())
-            {
-                currentState = PlayerState.Walk;
+                var rot = Quaternion.LookRotation(pc.relativeDir, Vector3.up);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, rot, turnSpeed * Time.deltaTime);
             }
 
+            if (want2Move && currentState != PlayerState.Dash)
+            {
+                currentState = PlayerState.Walk;
+                Walk();
+            }
+            else if (currentState == PlayerState.Dash)
+            {              
+                Dash();
+            }
+            else
+            {
+                currentState = PlayerState.Idle;
+            }
+            
             UpdatePlayerStateServerRpc(currentState);
         }
 
-        ApplyAnimation(currentState);
+       ApplyAnimation(IsOwner ? currentState : networkPlayerState.Value);
     }
 
-    
-    public bool ApplyMovement()
+
+    public void Walk()
     {
-        if (!canMove) return false;
-        Move(speed);
-        return true;
+        //Rotation
+        /*
+        var rot = Quaternion.LookRotation(pc.relativeDir, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, rot, turnSpeed * Time.deltaTime);
+        */
+        //transform.rotation = Quaternion.LookRotation(pc.relativeDir, Vector3.up);
+        //Movement
+        cc.Move(pc.relativeDir * Time.deltaTime * speed);
     }
 
     // REMOVE BUG --- Stop input during dashing resets rotation
-    public bool ApplyDash()
+    public void Dash()
     {
-        if (!canDash) timeLeft2Dash -= Time.deltaTime; //Lower Cooldown
-
-        if (isDashing && pc.LatestInput != Vector2.zero)
-        {
-            //MovePlayer
-            float timeLeftDashing = dashTime - (dashCooldown - timeLeft2Dash);
-            Move(timeLeftDashing * dashScaler);
-            return true;
-        }
-        return false;
+        transform.rotation = Quaternion.LookRotation(pc.relativeDir, Vector3.up);
+        //Movement
+        cc.Move(pc.relativeDir * Time.deltaTime * timeLeftDashing * dashScaler);
     }
 
     internal void DashRequest()
     {
         if (canDash)
-        timeLeft2Dash = dashCooldown;
+        {
+            currentState = PlayerState.Dash;
+            dashCD = dashMaxCD;        
+        }
     }
 
-    private void Move(float speedAmp)
-    {
-        var relativeDir = new Vector3(pc.LatestInput.x, 0f, pc.LatestInput.y).ToIso();
-        var rot = Quaternion.LookRotation(relativeDir, Vector3.up);
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, rot, turnSpeed * Time.deltaTime);
-        cc.Move(relativeDir * Time.deltaTime * speedAmp);
-    }
+
 
     void ApplyGravity()
     {
@@ -121,11 +134,28 @@ public class PlayerMotor : NetworkBehaviour
         cc.Move(yVel * Vector3.up * Time.deltaTime);
     }
 
+    private void LowerCoolDowns()
+    {
+        if (dashCD > 0) dashCD -= Time.deltaTime;
+        /*
+         * 
+         */
+
+    }
+
+    private void CancelStates()
+    {
+        if (currentState == PlayerState.Dash && isDashing == false)
+        {
+            currentState = PlayerState.Idle;
+        }
+    }
+
     public void ApplyAnimation(PlayerState state)
     {
         if (state == PlayerState.Idle)
         {
-            animator.SetBool("isWalking",false);
+            animator.SetBool("isWalking", false);
         }
         else if (state == PlayerState.Walk)
         {
@@ -136,6 +166,8 @@ public class PlayerMotor : NetworkBehaviour
     [ServerRpc]
     public void UpdatePlayerStateServerRpc(PlayerState state)
     {
+        if (networkPlayerState.Value == state) return;
+
         networkPlayerState.Value = state;
     }
 }

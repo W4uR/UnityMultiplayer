@@ -5,5 +5,5 @@ using Unity.Netcode;
 
 public class GameManager : Singleton<GameManager>
 {
-    
+
 }

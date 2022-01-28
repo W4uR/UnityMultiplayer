@@ -13,3 +13,4 @@ Yes
 + Alibi
 + Alibi
 + CS:GO fontosabb
++ LoL és Valorant fontosabb (I hate myself)

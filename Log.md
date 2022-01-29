@@ -14,3 +14,4 @@ Yes
 + Alibi
 + CS:GO fontosabb
 + LoL és Valorant fontosabb (I hate myself)
++ Implemented statemanagement (I love myself) ( not uploaded... I can't use git [I am indeed stupid {I hate myself} ] )

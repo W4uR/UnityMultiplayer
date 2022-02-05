@@ -20,3 +20,4 @@ Yes
 + x2
 + x3
 + burnt
++ randi give strength pls ty

@@ -21,3 +21,4 @@ Yes
 + x3
 + burnt
 + randi give strength pls ty
++ holnap kalkulus

@@ -22,3 +22,4 @@ Yes
 + burnt
 + randi give strength pls ty
 + holnap kalkulus
++ üdv

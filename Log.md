@@ -23,3 +23,4 @@ Yes
 + randi give strength pls ty
 + holnap kalkulus
 + üdv
++ viszlát

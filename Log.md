@@ -24,3 +24,4 @@ Yes
 + holnap kalkulus
 + üdv
 + viszlát
++ ibolya

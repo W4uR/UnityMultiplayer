@@ -26,4 +26,4 @@ Yes
 + viszlát
 + ibolya
 + ááááááááá
-+ 
++ feck

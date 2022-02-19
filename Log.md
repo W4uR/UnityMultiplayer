@@ -32,3 +32,5 @@ Yes
 + napiadag
 + mai commit
 + fa...szom
++ ikszdé
++ 

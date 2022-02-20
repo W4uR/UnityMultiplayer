@@ -33,4 +33,4 @@ Yes
 + mai commit
 + fa...szom
 + ikszdé
-+ 
++ lmao

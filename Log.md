@@ -39,3 +39,4 @@ Yes
 + -
 + :|
 + reflex
++ kifogyok mielőtt bármit csinálnék

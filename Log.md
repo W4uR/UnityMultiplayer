@@ -41,3 +41,4 @@ Yes
 + reflex
 + kifogyok mielőtt bármit csinálnék
 + ahhaa
++ oy

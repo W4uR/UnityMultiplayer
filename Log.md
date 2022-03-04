@@ -42,3 +42,4 @@ Yes
 + kifogyok mielőtt bármit csinálnék
 + ahhaa
 + oy
++ hkjuh

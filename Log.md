@@ -46,3 +46,4 @@ Yes
 + kakasfölde
 + bröh
 + :(
++ meg kéne csinálni a rendes commitolást

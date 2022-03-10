@@ -47,3 +47,4 @@ Yes
 + bröh
 + :(
 + meg kéne csinálni a rendes commitolást
++ hehelolxd

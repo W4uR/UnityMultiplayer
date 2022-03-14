@@ -51,3 +51,4 @@ Yes
 + 15
 + mount & blade
 + burkolás
++ vár

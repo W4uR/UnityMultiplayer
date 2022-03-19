@@ -54,4 +54,4 @@ Yes
 + vár
 + oh shiiiet
 + *harmatvölgy
-+ wow... 1 hónapnyi alibi
++ wow... 2 hónapnyi alibi
